@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 
 export default async function LoginPage() {
   const supabase = await createClient()
@@ -9,27 +11,33 @@ export default async function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center">
-      <div className="flex flex-col items-center gap-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Fortuna</h1>
-        <p className="text-sm text-gray-500">Sign in to continue</p>
+      <div className="flex flex-col items-center gap-6 w-full max-w-sm px-4">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">Fortuna</h1>
+          <p className="text-sm text-muted-foreground">
+            Your personal finance tracker
+          </p>
+        </div>
+
         <div className="flex flex-col gap-3 w-full">
           <form action="/auth/login" method="POST">
             <input type="hidden" name="provider" value="github" />
-            <button
-              type="submit"
-              className="w-full rounded-md border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-            >
+            <Button type="submit" variant="outline" className="w-full">
               Continue with GitHub
-            </button>
+            </Button>
           </form>
+
+          <div className="flex items-center gap-3">
+            <Separator className="flex-1" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <Separator className="flex-1" />
+          </div>
+
           <form action="/auth/login" method="POST">
             <input type="hidden" name="provider" value="google" />
-            <button
-              type="submit"
-              className="w-full rounded-md border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-            >
+            <Button type="submit" variant="outline" className="w-full">
               Continue with Google
-            </button>
+            </Button>
           </form>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { Button } from '@/components/ui/button'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -13,13 +14,13 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Hello, {user.user_metadata.name ?? user.email}
         </h1>
+        <p className="text-sm text-muted-foreground">
+          Your dashboard is coming soon.
+        </p>
         <form action="/auth/signout" method="POST">
-          <button
-            type="submit"
-            className="text-sm text-gray-500 hover:text-gray-800 transition-colors"
-          >
+          <Button type="submit" variant="ghost" size="sm">
             Sign out
-          </button>
+          </Button>
         </form>
       </div>
     </main>
