@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { type Subscription } from '@/lib/types'
 import { AddSubscriptionDialog } from '@/components/subscriptions/add-subscription-dialog'
+import { EditSubscriptionDialog } from '@/components/subscriptions/edit-subscription-dialog'
+import { DeleteSubscriptionButton } from '@/components/subscriptions/delete-subscription-button'
 
 export default async function SubscriptionsPage() {
   const supabase = await createClient()
@@ -45,9 +47,13 @@ export default async function SubscriptionsPage() {
                   )}
                 </span>
               </div>
-              <span className="text-sm font-medium tabular-nums">
-                €{sub.amount.toFixed(2)}
-              </span>
+              <div className="flex items-center gap-1">
+                <span className="text-sm font-medium tabular-nums mr-2">
+                  €{sub.amount.toFixed(2)}
+                </span>
+                <EditSubscriptionDialog sub={sub} />
+                <DeleteSubscriptionButton id={sub.id} name={sub.name} />
+              </div>
             </div>
           ))}
         </div>
