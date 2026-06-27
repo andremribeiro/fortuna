@@ -16,7 +16,7 @@ export function BottomNav() {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background z-50">
-      <div className="flex items-center justify-around h-16">
+      <div className="flex items-center justify-around h-16 pb-safe">
         {links.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}

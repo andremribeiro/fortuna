@@ -30,9 +30,12 @@ export default async function SubscriptionsPage() {
 
       {/* List */}
       {subscriptions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <p className="text-muted-foreground text-sm">No subscriptions yet.</p>
-          <p className="text-muted-foreground text-sm">Add one to get started.</p>
+        <div className="flex flex-col items-center justify-center py-24 text-center gap-3 rounded-lg border border-dashed">
+          <p className="text-2xl">📋</p>
+          <p className="font-medium">No subscriptions yet</p>
+          <p className="text-sm text-muted-foreground">
+            Click Add to track your first subscription.
+          </p>
         </div>
       ) : (
         <div className="flex flex-col divide-y rounded-lg border">

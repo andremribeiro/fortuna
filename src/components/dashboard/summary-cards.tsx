@@ -13,6 +13,18 @@ import { Button } from '@/components/ui/button'
 export function SummaryCards({ subscriptions }: { subscriptions: Subscription[] }) {
   const [period, setPeriod] = useState<'monthly' | 'yearly'>('monthly')
 
+  if (subscriptions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
+        <p className="text-2xl">💸</p>
+        <p className="font-medium">No subscriptions yet</p>
+        <p className="text-sm text-muted-foreground">
+          Add your first subscription to see your monthly spend.
+        </p>
+      </div>
+    )
+  }
+
   const totalMonthly = getTotalMonthly(subscriptions)
   const totalYearly = getTotalYearly(subscriptions)
   const byCategory = getByCategory(subscriptions)
