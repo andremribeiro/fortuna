@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { type Subscription } from '@/lib/types'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
+import { AddSubscriptionDialog } from '@/components/subscriptions/add-subscription-dialog'
 
 export default async function SubscriptionsPage() {
   const supabase = await createClient()
@@ -24,10 +23,7 @@ export default async function SubscriptionsPage() {
             {subscriptions.length} active subscription{subscriptions.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Button size="sm" className="gap-2">
-          <Plus size={16} />
-          Add
-        </Button>
+        <AddSubscriptionDialog />
       </div>
 
       {/* List */}
