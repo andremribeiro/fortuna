@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, CreditCard, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ThemeToggle } from '@/components/layout/theme-toggle'
 
 const links = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -30,6 +31,10 @@ export function BottomNav() {
             <span className="text-[10px]">{label}</span>
           </Link>
         ))}
+        <div className="flex flex-col items-center gap-1 flex-1 py-2">
+          <ThemeToggle />
+          <span className="text-[10px] text-muted-foreground">Theme</span>
+        </div>
       </div>
     </nav>
   )
