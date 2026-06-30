@@ -11,3 +11,16 @@ export type Subscription = {
   active: boolean
   created_at: string
 }
+
+export type Transaction = {
+  id: string
+  user_id: string
+  date: string
+  amount: number
+  merchant: string | null
+  category: string | null
+  description: string | null
+  source: 'manual' | 'csv'
+  subscription_id: string | null
+  created_at: string
+}
