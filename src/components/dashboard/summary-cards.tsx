@@ -10,16 +10,21 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-export function SummaryCards({ subscriptions }: { subscriptions: Subscription[] }) {
+interface SummaryCardsProps {
+  subscriptions: Subscription[]
+  monthlyExpenses: number
+}
+
+export function SummaryCards({ subscriptions, monthlyExpenses }: SummaryCardsProps) {
   const [period, setPeriod] = useState<'monthly' | 'yearly'>('monthly')
 
-  if (subscriptions.length === 0) {
+  if (subscriptions.length === 0 && monthlyExpenses === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
         <p className="text-2xl">💸</p>
-        <p className="font-medium">No subscriptions yet</p>
+        <p className="font-medium">No data yet</p>
         <p className="text-sm text-muted-foreground">
-          Add your first subscription to see your monthly spend.
+          Add subscriptions or transactions to see your spending.
         </p>
       </div>
     )
@@ -28,7 +33,10 @@ export function SummaryCards({ subscriptions }: { subscriptions: Subscription[] 
   const totalMonthly = getTotalMonthly(subscriptions)
   const totalYearly = getTotalYearly(subscriptions)
   const byCategory = getByCategory(subscriptions)
-  const total = period === 'monthly' ? totalMonthly : totalYearly
+
+  const subscriptionCost = period === 'monthly' ? totalMonthly : totalYearly
+  const expenseCost = period === 'monthly' ? monthlyExpenses : monthlyExpenses * 12
+  const total = subscriptionCost + expenseCost
 
   const sortedCategories = Object.entries(byCategory).sort((a, b) => b[1] - a[1])
 
@@ -58,16 +66,23 @@ export function SummaryCards({ subscriptions }: { subscriptions: Subscription[] 
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            Total {period} cost
+            Total {period} outgoings
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-3">
           <p className="text-4xl font-semibold tracking-tight tabular-nums">
             €{total.toFixed(2)}
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {subscriptions.filter(s => s.active).length} active subscriptions
-          </p>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Subscriptions</span>
+              <span className="tabular-nums">€{subscriptionCost.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Expenses</span>
+              <span className="tabular-nums">€{expenseCost.toFixed(2)}</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -76,7 +91,7 @@ export function SummaryCards({ subscriptions }: { subscriptions: Subscription[] 
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              By category
+              Subscriptions by category
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">

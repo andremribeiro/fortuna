@@ -5,16 +5,26 @@ import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  const { data: subscriptions, error } = await supabase
-    .from('subscriptions')
-    .select('*')
-    .eq('active', true)
-    .order('name')
 
-  if (error) {
-    return <p className="text-sm text-destructive">Failed to load subscriptions.</p>
+  const now = new Date()
+  const year = now.getUTCFullYear()
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0')
+  const firstOfMonth = `${year}-${month}-01`
+  const lastDay = new Date(Date.UTC(year, now.getUTCMonth() + 1, 0)).getUTCDate()
+  const lastOfMonth = `${year}-${month}-${String(lastDay).padStart(2, '0')}`
+
+  const [{ data: subscriptions, error: subError }, { data: transactions, error: txError }] =
+    await Promise.all([
+      supabase.from('subscriptions').select('*').eq('active', true).order('name'),
+      supabase.from('transactions').select('amount').gte('date', firstOfMonth).lte('date', lastOfMonth),
+    ])
+
+  if (subError || txError) {
+    return <p className="text-sm text-destructive">Failed to load dashboard.</p>
   }
 
+  const monthlyExpenses = (transactions ?? []).reduce((sum, t) => sum + t.amount, 0)
+  console.log('transactions this month:', transactions, 'total:', monthlyExpenses)
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -23,7 +33,7 @@ export default async function DashboardPage() {
           Your finances at a glance.
         </p>
       </div>
-      <SummaryCards subscriptions={subscriptions as Subscription[]} />
+      <SummaryCards subscriptions={subscriptions as Subscription[]} monthlyExpenses={monthlyExpenses} />
       <RecentTransactions />
     </div>
   )
