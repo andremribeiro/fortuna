@@ -60,7 +60,11 @@ export function CategoryCombobox({ value, onChange }: CategoryComboboxProps) {
             onValueChange={setInputValue}
             onKeyDown={handleKeyDown}
           />
-          <CommandList style={{ maxHeight: '180px', overflowY: 'auto' }} onWheel={(e) => e.stopPropagation()}>
+          <CommandList
+            style={{ maxHeight: '180px', overflowY: 'auto' }}
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
             <CommandEmpty
               className="py-3 px-4 text-sm cursor-pointer hover:bg-muted"
               onClick={() => inputValue && handleSelect(inputValue)}
