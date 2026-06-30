@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { type Subscription } from '@/lib/types'
 import { SummaryCards } from '@/components/dashboard/summary-cards'
+import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -15,14 +16,15 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Your subscriptions at a glance.
+          Your finances at a glance.
         </p>
       </div>
       <SummaryCards subscriptions={subscriptions as Subscription[]} />
+      <RecentTransactions />
     </div>
   )
 }
