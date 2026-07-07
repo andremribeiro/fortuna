@@ -21,14 +21,17 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Pencil } from 'lucide-react'
+import { CategoryCombobox } from '@/components/ui/category-combobox'
 
 export function EditSubscriptionDialog({ sub }: { sub: Subscription }) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
+  const [category, setCategory] = useState(sub.category ?? '')
 
   async function handleSubmit(formData: FormData) {
+    formData.set('category', category)
     setLoading(true)
     setError(null)
     try {
@@ -97,12 +100,8 @@ export function EditSubscriptionDialog({ sub }: { sub: Subscription }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-category">Category</Label>
-            <Input
-              id="edit-category"
-              name="category"
-              defaultValue={sub.category ?? ''}
-            />
+            <Label>Category</Label>
+            <CategoryCombobox value={category} onChange={setCategory} />
           </div>
 
           <div className="flex flex-col gap-1.5">

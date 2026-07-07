@@ -24,7 +24,6 @@ export default async function DashboardPage() {
   }
 
   const monthlyExpenses = (transactions ?? []).reduce((sum, t) => sum + t.amount, 0)
-  console.log('transactions this month:', transactions, 'total:', monthlyExpenses)
   return (
     <div className="flex flex-col gap-8">
       <div>

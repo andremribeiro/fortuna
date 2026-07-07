@@ -33,6 +33,7 @@ export async function addTransaction(formData: FormData) {
 
   revalidatePath('/dashboard/transactions')
   revalidatePath('/dashboard')
+  revalidatePath('/dashboard/trends')
 }
 
 export async function updateTransaction(id: string, formData: FormData) {
@@ -61,6 +62,7 @@ export async function updateTransaction(id: string, formData: FormData) {
 
   revalidatePath('/dashboard/transactions')
   revalidatePath('/dashboard')
+  revalidatePath('/dashboard/trends')
 }
 
 export async function deleteTransaction(id: string) {
@@ -79,4 +81,5 @@ export async function deleteTransaction(id: string) {
 
   revalidatePath('/dashboard/transactions')
   revalidatePath('/dashboard')
+  revalidatePath('/dashboard/trends')
 }
