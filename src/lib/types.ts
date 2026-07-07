@@ -20,7 +20,7 @@ export type Transaction = {
   merchant: string | null
   category: string | null
   description: string | null
-  source: 'manual' | 'csv'
+  source: 'manual' | 'csv' | 'subscription'
   subscription_id: string | null
   created_at: string
 }

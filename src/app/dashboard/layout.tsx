@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
 import { BottomNav } from '@/components/layout/bottom-nav'
+import { materializeCharges } from '@/lib/materialize-charges'
 
 export default async function DashboardLayout({
   children,
@@ -12,6 +13,9 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+
+  // Run on every dashboard load — safe due to unique index
+  await materializeCharges()
 
   return (
     <div className="flex h-screen bg-background">
