@@ -3,11 +3,17 @@ import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) redirect('/dashboard')
+
+  const { error } = await searchParams
 
   return (
     <main className="flex min-h-screen items-center justify-center">
@@ -18,6 +24,10 @@ export default async function LoginPage() {
             Your personal finance tracker
           </p>
         </div>
+
+        {error && (
+          <p className="text-sm text-destructive text-center">{error}</p>
+        )}
 
         <div className="flex flex-col gap-3 w-full">
           <form action="/auth/login" method="POST">

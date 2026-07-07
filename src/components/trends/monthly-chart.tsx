@@ -40,9 +40,9 @@ export function MonthlyChart({ data }: { data: MonthlyData[] }) {
               contentStyle={{
                 borderRadius: '8px',
                 fontSize: '12px',
-                backgroundColor: 'hsl(var(--popover))',
-                borderColor: 'hsl(var(--border))',
-                color: 'hsl(var(--popover-foreground))',
+                backgroundColor: 'var(--popover)',
+                borderColor: 'var(--border)',
+                color: 'var(--popover-foreground)',
               }}
             />
             <Legend wrapperStyle={{ fontSize: '12px' }} />
