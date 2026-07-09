@@ -40,8 +40,13 @@ export function getByCategory(subscriptions: Subscription[]): Record<string, num
     }, {} as Record<string, number>)
 }
 
-export function getNextChargeDate(currentDate: string, billing_cycle: string): string {
+export function getNextChargeDate(
+  currentDate: string,
+  billing_cycle: string,
+  anchorDay?: number | null
+): string {
   const [y, m, d] = currentDate.split('-').map(Number)
+  const day = anchorDay ?? d
 
   if (billing_cycle === 'weekly') {
     const date = new Date(y, m - 1, d + 7)
@@ -49,20 +54,19 @@ export function getNextChargeDate(currentDate: string, billing_cycle: string): s
   }
 
   if (billing_cycle === 'yearly') {
-    // Clamp day to last day of target month
-    const maxDay = new Date(y + 1, m, 0).getDate()
-    const clampedDay = Math.min(d, maxDay)
-    return `${y + 1}-${String(m).padStart(2, '0')}-${String(clampedDay).padStart(2, '0')}`
+    const nextYear = y + 1
+    const maxDay = new Date(nextYear, m, 0).getDate()
+    const clampedDay = Math.min(day, maxDay)
+    return `${nextYear}-${String(m).padStart(2, '0')}-${String(clampedDay).padStart(2, '0')}`
   }
 
   if (billing_cycle === 'monthly') {
     const nextMonth = m === 12 ? 1 : m + 1
     const nextYear = m === 12 ? y + 1 : y
     const maxDay = new Date(nextYear, nextMonth, 0).getDate()
-    const clampedDay = Math.min(d, maxDay)
+    const clampedDay = Math.min(day, maxDay)
     return `${nextYear}-${String(nextMonth).padStart(2, '0')}-${String(clampedDay).padStart(2, '0')}`
   }
 
-  // custom — don't advance
   return currentDate
 }

@@ -6,6 +6,7 @@ export type Subscription = {
   currency: string
   billing_cycle: 'monthly' | 'yearly' | 'weekly' | 'custom'
   next_charge_date: string | null
+  billing_anchor_day: number | null
   category: string | null
   notes: string | null
   active: boolean

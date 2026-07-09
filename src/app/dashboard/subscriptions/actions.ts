@@ -20,12 +20,17 @@ export async function addSubscription(formData: FormData) {
     throw new Error('Name, amount and billing cycle are required')
   }
 
+  const billing_anchor_day = next_charge_date
+    ? parseInt(next_charge_date.split('-')[2])
+    : null
+
   const { error } = await supabase.from('subscriptions').insert({
     user_id: user.id,
     name,
     amount,
     billing_cycle,
     next_charge_date: next_charge_date || null,
+    billing_anchor_day,
     category,
     notes,
     active: true,
@@ -55,9 +60,13 @@ export async function updateSubscription(id: string, formData: FormData) {
     throw new Error('Name, amount and billing cycle are required')
   }
 
+  const billing_anchor_day = next_charge_date
+    ? parseInt(next_charge_date.split('-')[2])
+    : null
+
   const { error } = await supabase
     .from('subscriptions')
-    .update({ name, amount, billing_cycle, next_charge_date, category, notes })
+    .update({ name, amount, billing_cycle, next_charge_date, billing_anchor_day, category, notes })
     .eq('id', id)
     .eq('user_id', user.id)
 

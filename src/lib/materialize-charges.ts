@@ -44,7 +44,7 @@ export async function materializeCharges() {
         break
       }
 
-      const next = getNextChargeDate(chargeDate, sub.billing_cycle)
+      const next = getNextChargeDate(chargeDate, sub.billing_cycle, sub.billing_anchor_day)
 
       // Safety: if cycle doesn't advance (custom), break
       if (next === chargeDate) break
