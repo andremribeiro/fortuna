@@ -1,9 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { type Transaction } from '@/lib/types'
 import { AddTransactionDialog } from '@/components/transactions/add-transaction-dialog'
-import { EditTransactionDialog } from '@/components/transactions/edit-transaction-dialog'
-import { DeleteTransactionButton } from '@/components/transactions/delete-transaction-button'
 import { TransactionFilters } from '@/components/transactions/transaction-filters'
+import { TransactionList } from '@/components/transactions/transaction-list'
 import { Suspense } from 'react'
 
 export default async function TransactionsPage({
@@ -43,13 +42,6 @@ export default async function TransactionsPage({
 
   const total = (transactions ?? []).reduce((sum, t) => sum + t.amount, 0)
 
-  // Group transactions by date
-  const groups: Record<string, Transaction[]> = {}
-  for (const t of transactions) {
-    if (!groups[t.date]) groups[t.date] = []
-    groups[t.date].push(t)
-  }
-
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -83,53 +75,7 @@ export default async function TransactionsPage({
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
-          {Object.entries(groups).map(([date, group]) => {
-            const [y, m, d] = date.split('-').map(Number)
-            const label = new Date(y, m - 1, d).toLocaleDateString('en-GB', {
-              weekday: 'short',
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })
-            const dayTotal = group.reduce((sum, t) => sum + t.amount, 0)
-
-            return (
-              <div key={date} className="flex flex-col gap-1">
-                {/* Date header */}
-                <div className="flex items-center justify-between px-1 py-1">
-                  <span className="text-xs font-medium text-muted-foreground">{label}</span>
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    €{dayTotal.toFixed(2)}
-                  </span>
-                </div>
-
-                {/* Transactions for this date */}
-                <div className="flex flex-col divide-y rounded-lg border">
-                  {group.map((t: Transaction) => (
-                    <div key={t.id} className="flex items-center justify-between px-4 py-3">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-sm font-medium">
-                          {t.merchant ?? t.description ?? t.category ?? 'Expense'}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {t.category ?? 'Uncategorized'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm font-medium tabular-nums mr-2">
-                          €{t.amount.toFixed(2)}
-                        </span>
-                        <EditTransactionDialog transaction={t} />
-                        <DeleteTransactionButton id={t.id} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        <TransactionList transactions={transactions as Transaction[]} />
       )}
     </div>
   )
