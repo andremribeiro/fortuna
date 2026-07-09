@@ -12,18 +12,35 @@ export default async function DashboardPage() {
   const firstOfMonth = `${year}-${month}-01`
   const lastDay = new Date(Date.UTC(year, now.getUTCMonth() + 1, 0)).getUTCDate()
   const lastOfMonth = `${year}-${month}-${String(lastDay).padStart(2, '0')}`
+  const firstOfYear = `${year}-01-01`
 
-  const [{ data: subscriptions, error: subError }, { data: transactions, error: txError }] =
-    await Promise.all([
-      supabase.from('subscriptions').select('*').eq('active', true).order('name'),
-      supabase.from('transactions').select('amount').gte('date', firstOfMonth).lte('date', lastOfMonth),
-    ])
+  const [
+    { data: subscriptions, error: subError },
+    { data: monthTransactions, error: monthError },
+    { data: yearTransactions, error: yearError },
+  ] = await Promise.all([
+    supabase.from('subscriptions').select('*').eq('active', true).order('name'),
+    supabase.from('transactions').select('amount, category').gte('date', firstOfMonth).lte('date', lastOfMonth),
+    supabase.from('transactions').select('amount, category').gte('date', firstOfYear),
+  ])
 
-  if (subError || txError) {
+  if (subError || monthError || yearError) {
     return <p className="text-sm text-destructive">Failed to load dashboard.</p>
   }
 
-  const monthlyExpenses = (transactions ?? []).reduce((sum, t) => sum + t.amount, 0)
+  const monthlyTotal = (monthTransactions ?? []).reduce((sum, t) => sum + t.amount, 0)
+  const yearlyTotal = (yearTransactions ?? []).reduce((sum, t) => sum + t.amount, 0)
+
+  // Category breakdown from actual transactions this year
+  const categoryMap: Record<string, number> = {}
+  for (const t of yearTransactions ?? []) {
+    const cat = t.category ?? 'Uncategorized'
+    categoryMap[cat] = (categoryMap[cat] ?? 0) + t.amount
+  }
+  const categoryData = Object.entries(categoryMap)
+    .map(([category, amount]) => ({ category, amount }))
+    .sort((a, b) => b.amount - a.amount)
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -32,7 +49,12 @@ export default async function DashboardPage() {
           Your finances at a glance.
         </p>
       </div>
-      <SummaryCards subscriptions={subscriptions as Subscription[]} monthlyExpenses={monthlyExpenses} />
+      <SummaryCards
+        subscriptions={subscriptions as Subscription[]}
+        monthlyTotal={monthlyTotal}
+        yearlyTotal={yearlyTotal}
+        categoryData={categoryData}
+      />
       <RecentTransactions />
     </div>
   )
