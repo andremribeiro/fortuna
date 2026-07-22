@@ -31,13 +31,23 @@ export default async function DashboardPage() {
   const monthlyTotal = (monthTransactions ?? []).reduce((sum, t) => sum + t.amount, 0)
   const yearlyTotal = (yearTransactions ?? []).reduce((sum, t) => sum + t.amount, 0)
 
+  // Category breakdown from actual transactions this month
+  const monthCategoryMap: Record<string, number> = {}
+  for (const t of monthTransactions ?? []) {
+    const cat = t.category ?? 'Uncategorized'
+    monthCategoryMap[cat] = (monthCategoryMap[cat] ?? 0) + t.amount
+  }
+  const monthlyCategoryData = Object.entries(monthCategoryMap)
+    .map(([category, amount]) => ({ category, amount }))
+    .sort((a, b) => b.amount - a.amount)
+
   // Category breakdown from actual transactions this year
-  const categoryMap: Record<string, number> = {}
+  const yearCategoryMap: Record<string, number> = {}
   for (const t of yearTransactions ?? []) {
     const cat = t.category ?? 'Uncategorized'
-    categoryMap[cat] = (categoryMap[cat] ?? 0) + t.amount
+    yearCategoryMap[cat] = (yearCategoryMap[cat] ?? 0) + t.amount
   }
-  const categoryData = Object.entries(categoryMap)
+  const yearlyCategoryData = Object.entries(yearCategoryMap)
     .map(([category, amount]) => ({ category, amount }))
     .sort((a, b) => b.amount - a.amount)
 
@@ -53,7 +63,8 @@ export default async function DashboardPage() {
         subscriptions={subscriptions as Subscription[]}
         monthlyTotal={monthlyTotal}
         yearlyTotal={yearlyTotal}
-        categoryData={categoryData}
+        monthlyCategoryData={monthlyCategoryData}
+        yearlyCategoryData={yearlyCategoryData}
       />
       <RecentTransactions />
     </div>

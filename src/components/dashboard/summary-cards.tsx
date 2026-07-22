@@ -9,14 +9,16 @@ interface SummaryCardsProps {
   subscriptions: Subscription[]
   monthlyTotal: number
   yearlyTotal: number
-  categoryData: { category: string; amount: number }[]
+  monthlyCategoryData: { category: string; amount: number }[]
+  yearlyCategoryData: { category: string; amount: number }[]
 }
 
 export function SummaryCards({
   subscriptions,
   monthlyTotal,
   yearlyTotal,
-  categoryData,
+  monthlyCategoryData,
+  yearlyCategoryData,
 }: SummaryCardsProps) {
   const [period, setPeriod] = useState<'monthly' | 'yearly'>('monthly')
 
@@ -76,7 +78,7 @@ export function SummaryCards({
       </Card>
 
       {/* Category breakdown from actual transactions */}
-      {categoryData.length > 0 && (
+      {(period === 'monthly' ? monthlyCategoryData : yearlyCategoryData).length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -84,31 +86,23 @@ export function SummaryCards({
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            {categoryData
-              .filter(({ amount }) => {
-                if (period === 'monthly') {
-                  // We don't have monthly breakdown here, show all for now
-                  return true
-                }
-                return true
-              })
-              .map(({ category, amount }) => {
-                const percentage = (amount / (period === 'yearly' ? yearlyTotal : monthlyTotal)) * 100
-                return (
-                  <div key={category} className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">{category}</span>
-                      <span className="text-sm tabular-nums">€{amount.toFixed(2)}</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-foreground transition-all"
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
+            {(period === 'monthly' ? monthlyCategoryData : yearlyCategoryData).map(({ category, amount }) => {
+              const percentage = (amount / total) * 100
+              return (
+                <div key={category} className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{category}</span>
+                    <span className="text-sm tabular-nums">€{amount.toFixed(2)}</span>
                   </div>
-                )
-              })}
+                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-foreground transition-all"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
           </CardContent>
         </Card>
       )}
