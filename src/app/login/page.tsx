@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 
 export default async function LoginPage({
   searchParams,
@@ -29,27 +28,12 @@ export default async function LoginPage({
           <p className="text-sm text-destructive text-center">{error}</p>
         )}
 
-        <div className="flex flex-col gap-3 w-full">
-          <form action="/auth/login" method="POST">
-            <input type="hidden" name="provider" value="github" />
-            <Button type="submit" variant="outline" className="w-full">
-              Continue with GitHub
-            </Button>
-          </form>
-
-          <div className="flex items-center gap-3">
-            <Separator className="flex-1" />
-            <span className="text-xs text-muted-foreground">or</span>
-            <Separator className="flex-1" />
-          </div>
-
-          <form action="/auth/login" method="POST">
-            <input type="hidden" name="provider" value="google" />
-            <Button type="submit" variant="outline" className="w-full">
-              Continue with Google
-            </Button>
-          </form>
-        </div>
+        <form action="/auth/login" method="POST" className="w-full">
+          <input type="hidden" name="provider" value="google" />
+          <Button type="submit" variant="outline" className="w-full">
+            Continue with Google
+          </Button>
+        </form>
       </div>
     </main>
   )
