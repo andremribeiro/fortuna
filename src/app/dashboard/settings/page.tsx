@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BudgetsCard } from '@/components/settings/budgets-card'
+import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { createClient } from '@/lib/supabase/server'
 import { type Budget } from '@/lib/types'
 
@@ -21,6 +22,20 @@ export default async function SettingsPage() {
       </div>
 
       <BudgetsCard budgets={(budgets as Budget[]) ?? []} />
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Appearance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <span className="text-sm">Theme</span>
+            <ThemeToggle />
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-2">
