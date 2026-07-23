@@ -1,7 +1,16 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { BudgetsCard } from '@/components/settings/budgets-card'
+import { createClient } from '@/lib/supabase/server'
+import { type Budget } from '@/lib/types'
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const supabase = await createClient()
+  const { data: budgets } = await supabase
+    .from('budgets')
+    .select('*')
+    .order('category')
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -10,6 +19,8 @@ export default function SettingsPage() {
           Manage your account settings.
         </p>
       </div>
+
+      <BudgetsCard budgets={(budgets as Budget[]) ?? []} />
 
       <Card>
         <CardHeader className="pb-2">

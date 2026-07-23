@@ -13,6 +13,15 @@ export type Subscription = {
   created_at: string
 }
 
+export type Budget = {
+  id: string
+  user_id: string
+  category: string
+  amount: number
+  created_at: string
+  updated_at: string
+}
+
 export type Transaction = {
   id: string
   user_id: string

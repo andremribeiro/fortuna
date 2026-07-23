@@ -5,12 +5,23 @@ import { type Subscription } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
+interface CategoryDatum {
+  category: string
+  amount: number
+}
+
 interface SummaryCardsProps {
   subscriptions: Subscription[]
   monthlyTotal: number
   yearlyTotal: number
-  monthlyCategoryData: { category: string; amount: number }[]
-  yearlyCategoryData: { category: string; amount: number }[]
+  monthlyCategoryData: CategoryDatum[]
+  yearlyCategoryData: CategoryDatum[]
+  budgets: { category: string; amount: number }[]
+}
+
+// A category row on the breakdown, optionally carrying its monthly budget cap.
+interface BreakdownRow extends CategoryDatum {
+  budget?: number
 }
 
 export function SummaryCards({
@@ -19,6 +30,7 @@ export function SummaryCards({
   yearlyTotal,
   monthlyCategoryData,
   yearlyCategoryData,
+  budgets,
 }: SummaryCardsProps) {
   const [period, setPeriod] = useState<'monthly' | 'yearly'>('monthly')
 
@@ -37,6 +49,28 @@ export function SummaryCards({
       </div>
     )
   }
+
+  const budgetMap = new Map(budgets.map((b) => [b.category, b.amount]))
+
+  // Monthly view merges budgeted categories in even when nothing was spent yet,
+  // so a budget you're respecting perfectly is still visible. Yearly view stays
+  // a pure spend breakdown — budgets are monthly caps.
+  const monthlyRows: BreakdownRow[] = (() => {
+    const rows: BreakdownRow[] = monthlyCategoryData.map((d) => ({
+      ...d,
+      budget: budgetMap.get(d.category),
+    }))
+    const seen = new Set(rows.map((r) => r.category))
+    for (const [category, budget] of budgetMap) {
+      if (!seen.has(category)) rows.push({ category, amount: 0, budget })
+    }
+    return rows.sort((a, b) => b.amount - a.amount)
+  })()
+
+  const rows: BreakdownRow[] =
+    period === 'monthly'
+      ? monthlyRows
+      : yearlyCategoryData.map((d) => ({ ...d }))
 
   return (
     <div className="flex flex-col gap-4">
@@ -78,7 +112,7 @@ export function SummaryCards({
       </Card>
 
       {/* Category breakdown from actual transactions */}
-      {(period === 'monthly' ? monthlyCategoryData : yearlyCategoryData).length > 0 && (
+      {rows.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -86,20 +120,50 @@ export function SummaryCards({
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            {(period === 'monthly' ? monthlyCategoryData : yearlyCategoryData).map(({ category, amount }) => {
-              const percentage = (amount / total) * 100
+            {rows.map(({ category, amount, budget }) => {
+              const hasBudget = budget !== undefined && budget > 0
+              // Budgeted rows track progress toward the cap; others show share of total.
+              const ratio = hasBudget
+                ? amount / budget
+                : total > 0 ? amount / total : 0
+              const width = Math.min(ratio, 1) * 100
+              const over = hasBudget && amount > budget
+              const barColor = !hasBudget
+                ? 'bg-foreground'
+                : over
+                  ? 'bg-destructive'
+                  : ratio >= 0.8
+                    ? 'bg-amber-500'
+                    : 'bg-emerald-500'
+
               return (
                 <div key={category} className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm">{category}</span>
-                    <span className="text-sm tabular-nums">€{amount.toFixed(2)}</span>
+                    <span className="text-sm tabular-nums">
+                      {hasBudget ? (
+                        <>
+                          <span className={over ? 'text-destructive' : undefined}>
+                            €{amount.toFixed(2)}
+                          </span>
+                          <span className="text-muted-foreground"> / €{budget.toFixed(2)}</span>
+                        </>
+                      ) : (
+                        <>€{amount.toFixed(2)}</>
+                      )}
+                    </span>
                   </div>
                   <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-foreground transition-all"
-                      style={{ width: `${percentage}%` }}
+                      className={`h-full rounded-full transition-all ${barColor}`}
+                      style={{ width: `${width}%` }}
                     />
                   </div>
+                  {over && (
+                    <span className="text-xs text-destructive">
+                      Over by €{(amount - budget).toFixed(2)}
+                    </span>
+                  )}
                 </div>
               )
             })}

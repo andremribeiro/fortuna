@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { type Subscription } from '@/lib/types'
+import { type Subscription, type Budget } from '@/lib/types'
 import { SummaryCards } from '@/components/dashboard/summary-cards'
 import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 
@@ -18,12 +18,15 @@ export default async function DashboardPage() {
     { data: subscriptions, error: subError },
     { data: monthTransactions, error: monthError },
     { data: yearTransactions, error: yearError },
+    { data: budgets },
   ] = await Promise.all([
     supabase.from('subscriptions').select('*').eq('active', true).order('name'),
     supabase.from('transactions').select('amount, category').gte('date', firstOfMonth).lte('date', lastOfMonth),
     supabase.from('transactions').select('amount, category').gte('date', firstOfYear),
+    supabase.from('budgets').select('category, amount'),
   ])
 
+  // Budgets are an optional enhancement — a missing table shouldn't break the dashboard.
   if (subError || monthError || yearError) {
     return <p className="text-sm text-destructive">Failed to load dashboard.</p>
   }
@@ -65,6 +68,7 @@ export default async function DashboardPage() {
         yearlyTotal={yearlyTotal}
         monthlyCategoryData={monthlyCategoryData}
         yearlyCategoryData={yearlyCategoryData}
+        budgets={(budgets as Pick<Budget, 'category' | 'amount'>[]) ?? []}
       />
       <RecentTransactions />
     </div>
