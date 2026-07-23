@@ -14,5 +14,6 @@ export const CATEGORIES = [
   'Software & Cloud',
   'Personal Care',
   'Education',
+  'Gifts',
   'Other',
 ] as const
