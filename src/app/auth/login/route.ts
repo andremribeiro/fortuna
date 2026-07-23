@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 
 export async function POST(request: Request) {
   const formData = await request.formData()
-  const provider = formData.get('provider') as 'github' | 'google'
+  const provider = formData.get('provider') as 'google'
 
   const supabase = await createClient()
 

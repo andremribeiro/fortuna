@@ -40,7 +40,6 @@ export async function addSubscription(formData: FormData) {
 
   revalidatePath('/dashboard/subscriptions')
   revalidatePath('/dashboard')
-  revalidatePath('/dashboard/trends')
 }
 
 export async function updateSubscription(id: string, formData: FormData) {
@@ -74,7 +73,6 @@ export async function updateSubscription(id: string, formData: FormData) {
 
   revalidatePath('/dashboard/subscriptions')
   revalidatePath('/dashboard')
-  revalidatePath('/dashboard/trends')
 }
 
 export async function deleteSubscription(id: string) {
@@ -93,5 +91,4 @@ export async function deleteSubscription(id: string) {
 
   revalidatePath('/dashboard/subscriptions')
   revalidatePath('/dashboard')
-  revalidatePath('/dashboard/trends')
 }
