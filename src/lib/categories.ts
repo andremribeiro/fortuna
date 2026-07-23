@@ -11,6 +11,7 @@ export const CATEGORIES = [
   'Loans & Finance',
   'Home & Utilities',
   'Subscriptions',
+  'Software & Cloud',
   'Personal Care',
   'Education',
   'Other',

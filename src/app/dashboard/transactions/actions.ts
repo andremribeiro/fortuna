@@ -11,9 +11,9 @@ export async function addTransaction(formData: FormData) {
 
   const amount = parseFloat(formData.get('amount') as string)
   const date = formData.get('date') as string
-  const merchant = formData.get('merchant') as string || null
-  const category = formData.get('category') as string || null
-  const description = formData.get('description') as string || null
+  const merchant = (formData.get('merchant') as string)?.trim() || null
+  const category = (formData.get('category') as string)?.trim() || null
+  const description = (formData.get('description') as string)?.trim() || null
 
   if (isNaN(amount) || !date) {
     throw new Error('Amount and date are required')
@@ -43,9 +43,9 @@ export async function updateTransaction(id: string, formData: FormData) {
 
   const amount = parseFloat(formData.get('amount') as string)
   const date = formData.get('date') as string
-  const merchant = formData.get('merchant') as string || null
-  const category = formData.get('category') as string || null
-  const description = formData.get('description') as string || null
+  const merchant = (formData.get('merchant') as string)?.trim() || null
+  const category = (formData.get('category') as string)?.trim() || null
+  const description = (formData.get('description') as string)?.trim() || null
 
   if (isNaN(amount) || !date) {
     throw new Error('Amount and date are required')
