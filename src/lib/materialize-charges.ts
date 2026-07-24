@@ -32,7 +32,9 @@ export async function materializeCharges() {
         amount: sub.amount,
         date: chargeDate,
         merchant: sub.name,
-        category: sub.category ?? 'Subscriptions',
+        // Left null when the subscription has none — surfaces as "Uncategorized"
+        // rather than inventing a classification the user never chose.
+        category: sub.category,
         description: `${sub.name} — auto-charged`,
         source: 'subscription',
         subscription_id: sub.id,
