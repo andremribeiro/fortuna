@@ -14,7 +14,10 @@ export async function POST(request: Request) {
     },
   })
 
-  if (error || !data.url) redirect('/login?error=Could not sign in')
+  if (error || !data.url) {
+    console.error('Failed to start Google sign-in:', error)
+    redirect('/login?error=start')
+  }
 
   redirect(data.url)
 }
