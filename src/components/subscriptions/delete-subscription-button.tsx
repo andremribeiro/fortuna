@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function DeleteSubscriptionButton({ id, name }: { id: string; name: string }) {
   const [loading, setLoading] = useState(false)
@@ -23,6 +24,8 @@ export function DeleteSubscriptionButton({ id, name }: { id: string; name: strin
     setLoading(true)
     try {
       await deleteSubscription(id)
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to delete subscription')
     } finally {
       setLoading(false)
     }

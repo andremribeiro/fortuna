@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function DeleteTransactionButton({ id }: { id: string }) {
   const [loading, setLoading] = useState(false)
@@ -23,6 +24,8 @@ export function DeleteTransactionButton({ id }: { id: string }) {
     setLoading(true)
     try {
       await deleteTransaction(id)
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed to delete transaction')
     } finally {
       setLoading(false)
     }

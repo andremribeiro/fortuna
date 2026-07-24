@@ -8,6 +8,7 @@ import { deleteTransactions } from '@/app/dashboard/transactions/actions'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +58,10 @@ export function TransactionList({ transactions }: TransactionListProps) {
     try {
       await deleteTransactions(Array.from(selected))
       setSelected(new Set())
+    } catch (e: unknown) {
+      // The dialog has already closed by now, so the toast is the only feedback
+      // left. Selection is deliberately kept so the delete can be retried.
+      toast.error(e instanceof Error ? e.message : 'Failed to delete transactions')
     } finally {
       setLoading(false)
     }
