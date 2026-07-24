@@ -33,14 +33,14 @@ export function CategoryCombobox({ value, onChange }: CategoryComboboxProps) {
     setOpen(false)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && inputValue) {
-      handleSelect(inputValue)
-    }
+  // Clear the filter on close so reopening doesn't start on a stale query.
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next)
+    if (!next) setInputValue('')
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -48,28 +48,24 @@ export function CategoryCombobox({ value, onChange }: CategoryComboboxProps) {
           aria-expanded={open}
           className="w-full justify-between font-normal"
         >
-          {value || 'Select or type category'}
+          {value || 'Select category'}
           <ChevronsUpDown size={14} className="opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
         <Command className="max-h-64">
           <CommandInput
-            placeholder="Search or type custom..."
+            placeholder="Search categories..."
             value={inputValue}
             onValueChange={setInputValue}
-            onKeyDown={handleKeyDown}
           />
           <CommandList
             style={{ maxHeight: '180px', overflowY: 'auto' }}
             onWheel={(e) => e.stopPropagation()}
             onTouchMove={(e) => e.stopPropagation()}
           >
-            <CommandEmpty
-              className="py-3 px-4 text-sm cursor-pointer hover:bg-muted"
-              onClick={() => inputValue && handleSelect(inputValue)}
-            >
-              Use &quot;{inputValue}&quot;
+            <CommandEmpty className="py-3 px-4 text-sm text-muted-foreground">
+              No category found.
             </CommandEmpty>
             <CommandGroup>
               {CATEGORIES.map((cat) => (

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { isCategory } from '@/lib/categories'
 import { revalidatePath } from 'next/cache'
 
 export async function setBudget(category: string, amount: number) {
@@ -10,6 +11,7 @@ export async function setBudget(category: string, amount: number) {
   if (!user) throw new Error('Not authenticated')
 
   if (!category) throw new Error('Category is required')
+  if (!isCategory(category)) throw new Error(`Unknown category: ${category}`)
   if (isNaN(amount) || amount < 0) throw new Error('Amount must be zero or more')
 
   const { error } = await supabase

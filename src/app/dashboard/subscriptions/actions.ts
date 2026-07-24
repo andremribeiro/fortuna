@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { isCategory } from '@/lib/categories'
 import { revalidatePath } from 'next/cache'
 
 export async function addSubscription(formData: FormData) {
@@ -23,6 +24,10 @@ export async function addSubscription(formData: FormData) {
   const billing_anchor_day = next_charge_date
     ? parseInt(next_charge_date.split('-')[2])
     : null
+
+  if (category && !isCategory(category)) {
+    throw new Error(`Unknown category: ${category}`)
+  }
 
   const { error } = await supabase.from('subscriptions').insert({
     user_id: user.id,
@@ -62,6 +67,10 @@ export async function updateSubscription(id: string, formData: FormData) {
   const billing_anchor_day = next_charge_date
     ? parseInt(next_charge_date.split('-')[2])
     : null
+
+  if (category && !isCategory(category)) {
+    throw new Error(`Unknown category: ${category}`)
+  }
 
   const { error } = await supabase
     .from('subscriptions')

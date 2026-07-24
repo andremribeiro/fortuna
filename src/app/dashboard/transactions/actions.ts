@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { isCategory } from '@/lib/categories'
 import { revalidatePath } from 'next/cache'
 
 export async function addTransaction(formData: FormData) {
@@ -17,6 +18,10 @@ export async function addTransaction(formData: FormData) {
 
   if (isNaN(amount) || !date) {
     throw new Error('Amount and date are required')
+  }
+
+  if (category && !isCategory(category)) {
+    throw new Error(`Unknown category: ${category}`)
   }
 
   const { error } = await supabase.from('transactions').insert({
@@ -49,6 +54,10 @@ export async function updateTransaction(id: string, formData: FormData) {
 
   if (isNaN(amount) || !date) {
     throw new Error('Amount and date are required')
+  }
+
+  if (category && !isCategory(category)) {
+    throw new Error(`Unknown category: ${category}`)
   }
 
   const { error } = await supabase
