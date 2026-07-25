@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -38,17 +38,48 @@ export function TransactionFilters() {
   const hasFilters = month || category || search
 
   const updateParam = useCallback(
-    (key: string, value: string) => {
+    (key: string, value: string, { replace = false } = {}) => {
       const params = new URLSearchParams(searchParams.toString())
       if (value) {
         params.set(key, value)
       } else {
         params.delete(key)
       }
-      router.push(`${pathname}?${params.toString()}`)
+      // Any filter change invalidates the current page — page 5 of an unfiltered
+      // list is usually past the end of a filtered one.
+      params.delete('page')
+      const url = `${pathname}?${params.toString()}`
+      if (replace) {
+        router.replace(url)
+      } else {
+        router.push(url)
+      }
     },
     [router, pathname, searchParams]
   )
+
+  // Search is held locally so typing stays instant; the URL catches up after a
+  // pause. Previously every keystroke pushed a route and hit the server.
+  const [searchInput, setSearchInput] = useState(search)
+
+  // Resync when the URL changes from outside this input — Clear, or back/forward.
+  // Adjusting state during render is React's documented pattern for this; an
+  // effect would both lag by a render and trip react-hooks/set-state-in-effect.
+  const [syncedSearch, setSyncedSearch] = useState(search)
+  if (search !== syncedSearch) {
+    setSyncedSearch(search)
+    setSearchInput(search)
+  }
+
+  useEffect(() => {
+    if (searchInput === search) return
+    const timer = setTimeout(() => {
+      // replace, not push: one entry per pause would make Back walk through
+      // every prefix of what you typed.
+      updateParam('search', searchInput, { replace: true })
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchInput, search, updateParam])
 
   const clearFilters = () => {
     router.push(pathname)
@@ -96,8 +127,8 @@ export function TransactionFilters() {
         {/* Search */}
         <Input
           placeholder="Search merchant..."
-          value={search}
-          onChange={(e) => updateParam('search', e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           className="h-8 text-xs w-[180px]"
         />
 
