@@ -127,3 +127,17 @@
     @apply font-sans;
     }
 }
+
+/* Tailwind v4 ships no safe-area utilities, so `pb-safe` in the bottom nav was
+   silently compiling to nothing and the nav sat under the iPhone home
+   indicator. Note these only resolve to non-zero with viewport-fit=cover,
+   which layout.tsx sets. */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Clears the fixed bottom nav (h-16) plus whatever the device reserves below
+   it, so the last row of a list is never trapped behind the nav. */
+@utility pb-nav {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+}

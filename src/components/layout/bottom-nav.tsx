@@ -16,8 +16,11 @@ export function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background z-50">
-      <div className="flex items-center justify-around h-16 pb-safe">
+    // pb-safe belongs on the nav, not the h-16 row: padding inside a fixed
+    // height just squashes the icons, where here it extends the nav so the
+    // row clears the home indicator.
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background z-50 pb-safe">
+      <div className="flex items-center justify-around h-16">
         {links.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}
