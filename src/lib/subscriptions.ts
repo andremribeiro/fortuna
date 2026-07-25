@@ -5,7 +5,6 @@ export function getMonthlyAmount(sub: Subscription): number {
     case 'monthly': return sub.amount
     case 'yearly': return sub.amount / 12
     case 'weekly': return (sub.amount * 52) / 12
-    default: return sub.amount
   }
 }
 
@@ -14,7 +13,6 @@ export function getYearlyAmount(sub: Subscription): number {
     case 'monthly': return sub.amount * 12
     case 'yearly': return sub.amount
     case 'weekly': return sub.amount * 52
-    default: return sub.amount * 12
   }
 }
 
@@ -49,7 +47,11 @@ export function getNextChargeDate(
   const day = anchorDay ?? d
 
   if (billing_cycle === 'weekly') {
-    const date = new Date(y, m - 1, d + 7)
+    // Date.UTC + toISOString stay in the same timezone throughout. Building a
+    // local Date here instead lost a day for every user east of UTC — local
+    // midnight is the previous day in UTC — so "+7 days" advanced by six and
+    // weekly subscriptions drifted a day earlier every cycle.
+    const date = new Date(Date.UTC(y, m - 1, d + 7))
     return date.toISOString().split('T')[0]
   }
 

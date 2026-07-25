@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { isCategory } from '@/lib/categories'
+import { isBillingCycle } from '@/lib/types'
+import { getNextChargeDate } from '@/lib/subscriptions'
 import { revalidatePath } from 'next/cache'
 
 export async function addSubscription(formData: FormData) {
@@ -19,6 +21,12 @@ export async function addSubscription(formData: FormData) {
 
   if (!name || isNaN(amount) || !billing_cycle) {
     throw new Error('Name, amount and billing cycle are required')
+  }
+
+  // The database enforces this too; checking here turns a raw constraint
+  // violation into a message the dialog can show.
+  if (!isBillingCycle(billing_cycle)) {
+    throw new Error(`Unknown billing cycle: ${billing_cycle}`)
   }
 
   const billing_anchor_day = next_charge_date
@@ -64,6 +72,10 @@ export async function updateSubscription(id: string, formData: FormData) {
     throw new Error('Name, amount and billing cycle are required')
   }
 
+  if (!isBillingCycle(billing_cycle)) {
+    throw new Error(`Unknown billing cycle: ${billing_cycle}`)
+  }
+
   const billing_anchor_day = next_charge_date
     ? parseInt(next_charge_date.split('-')[2])
     : null
@@ -75,6 +87,53 @@ export async function updateSubscription(id: string, formData: FormData) {
   const { error } = await supabase
     .from('subscriptions')
     .update({ name, amount, billing_cycle, next_charge_date, billing_anchor_day, category, notes })
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/dashboard/subscriptions')
+  revalidatePath('/dashboard')
+}
+
+export async function setSubscriptionActive(id: string, active: boolean) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const updates: { active: boolean; next_charge_date?: string } = { active }
+
+  if (active) {
+    // Resuming must not backfill the pause. materializeCharges walks every cycle
+    // from next_charge_date up to today, so a subscription paused in January and
+    // resumed in July would otherwise land six charges that never happened.
+    // Rolling the date forward first means billing restarts from the next real
+    // cycle. Dates here are UTC, matching materializeCharges.
+    const { data: sub } = await supabase
+      .from('subscriptions')
+      .select('next_charge_date, billing_cycle, billing_anchor_day')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (sub?.next_charge_date) {
+      const today = new Date().toISOString().split('T')[0]
+      let next = sub.next_charge_date
+
+      while (next <= today) {
+        const advanced = getNextChargeDate(next, sub.billing_cycle, sub.billing_anchor_day)
+        if (advanced === next) break
+        next = advanced
+      }
+
+      updates.next_charge_date = next
+    }
+  }
+
+  const { error } = await supabase
+    .from('subscriptions')
+    .update(updates)
     .eq('id', id)
     .eq('user_id', user.id)
 

@@ -1,10 +1,21 @@
+// 'custom' was removed: it had no interval to advance by, so a custom
+// subscription's next charge date never moved. See the migration that narrowed
+// the matching check constraint.
+export const BILLING_CYCLES = ['monthly', 'yearly', 'weekly'] as const
+
+export type BillingCycle = (typeof BILLING_CYCLES)[number]
+
+export function isBillingCycle(value: string): value is BillingCycle {
+  return (BILLING_CYCLES as readonly string[]).includes(value)
+}
+
 export type Subscription = {
   id: string
   user_id: string
   name: string
   amount: number
   currency: string
-  billing_cycle: 'monthly' | 'yearly' | 'weekly' | 'custom'
+  billing_cycle: BillingCycle
   next_charge_date: string | null
   billing_anchor_day: number | null
   category: string | null

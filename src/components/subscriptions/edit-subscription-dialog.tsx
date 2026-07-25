@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { Pencil } from 'lucide-react'
 import { CategoryCombobox } from '@/components/ui/category-combobox'
+import { BILLING_CYCLES } from '@/lib/types'
 
 export function EditSubscriptionDialog({ sub }: { sub: Subscription }) {
   const [open, setOpen] = useState(false)
@@ -81,10 +82,11 @@ export function EditSubscriptionDialog({ sub }: { sub: Subscription }) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
+                {BILLING_CYCLES.map((cycle) => (
+                  <SelectItem key={cycle} value={cycle} className="capitalize">
+                    {cycle}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

@@ -1,9 +1,16 @@
 import 'server-only'
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { getNextChargeDate } from '@/lib/subscriptions'
 import type { Subscription } from '@/lib/types'
 
-export async function materializeCharges() {
+// Pages await this before reading transactions, so a charge that came due today
+// is visible on the load that materializes it. It used to run only in the
+// dashboard layout, which React renders concurrently with the page — the page's
+// queries usually won first and the new charge didn't appear until the next
+// navigation. cache() keeps it to one run per request no matter how many callers
+// await it.
+export const materializeCharges = cache(async function materializeCharges() {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -48,7 +55,8 @@ export async function materializeCharges() {
 
       const next = getNextChargeDate(chargeDate, sub.billing_cycle, sub.billing_anchor_day)
 
-      // Safety: if cycle doesn't advance (custom), break
+      // Every remaining cycle advances, but an unrecognised value would return
+      // the same date and spin this loop forever. Cheap insurance.
       if (next === chargeDate) break
 
       chargeDate = next
@@ -61,4 +69,4 @@ export async function materializeCharges() {
       .eq('id', sub.id)
       .eq('user_id', user.id)
   }
-}
+})
