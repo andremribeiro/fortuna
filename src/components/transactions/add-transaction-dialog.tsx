@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { CategoryCombobox } from '@/components/ui/category-combobox'
+import { today } from '@/lib/format'
 import { Plus } from 'lucide-react'
 
 export function AddTransactionDialog() {
@@ -72,7 +73,7 @@ export function AddTransactionDialog() {
               id="date"
               name="date"
               type="date"
-              defaultValue={new Date().toISOString().split('T')[0]}
+              defaultValue={today()}
               required
             />
           </div>

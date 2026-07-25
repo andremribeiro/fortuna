@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { type Transaction } from '@/lib/types'
+import { formatDate, formatMoney } from '@/lib/format'
 import Link from 'next/link'
 
 export async function RecentTransactions() {
@@ -28,11 +29,11 @@ export async function RecentTransactions() {
                 {t.merchant ?? t.description ?? t.category ?? 'Expense'}
               </span>
               <span className="text-xs text-muted-foreground">
-                {t.category ?? 'Uncategorized'} · {new Date(t.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                {t.category ?? 'Uncategorized'} · {formatDate(t.date, { day: 'numeric', month: 'short' })}
               </span>
             </div>
             <span className="text-sm font-medium tabular-nums">
-              €{t.amount.toFixed(2)}
+              {formatMoney(t.amount)}
             </span>
           </div>
         ))}

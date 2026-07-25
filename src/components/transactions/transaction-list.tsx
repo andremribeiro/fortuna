@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { type Transaction } from '@/lib/types'
+import { formatDate, formatMoney } from '@/lib/format'
 import { EditTransactionDialog } from '@/components/transactions/edit-transaction-dialog'
 import { DeleteTransactionButton } from '@/components/transactions/delete-transaction-button'
 import { deleteTransactions } from '@/app/dashboard/transactions/actions'
@@ -128,8 +129,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
 
       {/* Grouped list */}
       {Object.entries(groups).map(([date, group]) => {
-        const [y, m, d] = date.split('-').map(Number)
-        const label = new Date(y, m - 1, d).toLocaleDateString('en-GB', {
+        const label = formatDate(date, {
           weekday: 'short',
           day: 'numeric',
           month: 'short',
@@ -143,7 +143,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
             <div className="flex items-center justify-between px-1 py-1">
               <span className="text-xs font-medium text-muted-foreground">{label}</span>
               <span className="text-xs text-muted-foreground tabular-nums">
-                €{dayTotal.toFixed(2)}
+                {formatMoney(dayTotal)}
               </span>
             </div>
 
@@ -173,7 +173,7 @@ export function TransactionList({ transactions }: TransactionListProps) {
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-medium tabular-nums mr-2">
-                      €{t.amount.toFixed(2)}
+                      {formatMoney(t.amount)}
                     </span>
                     <EditTransactionDialog transaction={t} />
                     <DeleteTransactionButton id={t.id} />

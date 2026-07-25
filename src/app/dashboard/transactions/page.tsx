@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { type Transaction } from '@/lib/types'
+import { formatMoney, monthRange } from '@/lib/format'
+import { materializeCharges } from '@/lib/materialize-charges'
 import { AddTransactionDialog } from '@/components/transactions/add-transaction-dialog'
 import { TransactionFilters } from '@/components/transactions/transaction-filters'
 import { TransactionList } from '@/components/transactions/transaction-list'
@@ -14,61 +16,51 @@ export default async function TransactionsPage({
 }: {
   searchParams: Promise<{ month?: string; category?: string; search?: string; page?: string }>
 }) {
+  // Before the queries below: a charge due today should appear in this list on
+  // the load that creates it, not the one after.
+  await materializeCharges()
+
   const { month, category, search, page } = await searchParams
   const supabase = await createClient()
 
   const requestedPage = Math.max(1, Number(page) || 1)
 
-  // The same filters feed two queries — one page of rows, and the totals across
-  // every match — so they're built in one place to stop the two drifting apart.
-  const filtered = (columns: string) => {
-    let query = supabase.from('transactions').select(columns)
-
-    if (month) {
-      const [year, m] = month.split('-')
-      const lastDay = new Date(Number(year), Number(m), 0).getDate()
-      query = query
-        .gte('date', `${month}-01`)
-        .lte('date', `${month}-${String(lastDay).padStart(2, '0')}`)
-    }
-
-    if (category) {
-      query = query.eq('category', category)
-    }
-
-    if (search) {
-      query = query.or(`merchant.ilike.%${search}%,description.ilike.%${search}%`)
-    }
-
-    return query
+  // Filtering, counting and summing all live in SQL now. Reducing over the rows
+  // in JS looked fine but silently truncated at PostgREST's 1000-row response
+  // cap, so both the total and the page count understated a large result set.
+  // The two functions share one WHERE clause, which is what keeps the header
+  // describing the same rows the list is paging through.
+  const range = month ? monthRange(month) : null
+  const filters = {
+    p_from: range?.from ?? null,
+    p_to: range?.to ?? null,
+    p_category: category || null,
+    p_search: search || null,
   }
 
-  // Amount-only pass so the header describes every match rather than just the
-  // rows on screen. Runs before the row fetch because the page number is clamped
-  // against the real page count — one extra round trip, in exchange for ?page=999
-  // landing on the last page instead of an empty one.
-  const { data: amounts, error: totalsError } = await filtered('amount')
+  const { data: totals, error: totalsError } = await supabase
+    .rpc('transaction_totals', filters)
+    .single<{ match_count: number; total: number }>()
 
-  const matchCount = amounts?.length ?? 0
-  // Cast through unknown: a variable column list leaves Supabase unable to infer
-  // the row shape, same as the rows query below.
-  const total = ((amounts ?? []) as unknown as { amount: number }[]).reduce(
-    (sum, t) => sum + t.amount,
-    0
-  )
+  const matchCount = totals?.match_count ?? 0
+  const total = totals?.total ?? 0
   const pageCount = Math.max(1, Math.ceil(matchCount / PAGE_SIZE))
+  // Clamped against the real page count so ?page=999 lands on the last page
+  // rather than an empty one.
   const currentPage = Math.min(requestedPage, pageCount)
   const offset = (currentPage - 1) * PAGE_SIZE
 
-  const { data: transactions, error } = await filtered('*')
-    .order('date', { ascending: false })
-    .range(offset, offset + PAGE_SIZE - 1)
+  const { data: transactions, error } = await supabase.rpc('search_transactions', {
+    ...filters,
+    p_limit: PAGE_SIZE,
+    p_offset: offset,
+  })
 
   if (error || totalsError) {
     return <p className="text-sm text-destructive">Failed to load transactions.</p>
   }
 
-  const rows = (transactions ?? []) as unknown as Transaction[]
+  const rows = (transactions ?? []) as Transaction[]
   const hasFilters = Boolean(month || category || search)
 
   // Carries the active filters across page links, so paging never silently
@@ -92,7 +84,7 @@ export default async function TransactionsPage({
           <p className="text-sm text-muted-foreground">
             {matchCount} transaction{matchCount !== 1 ? 's' : ''}
             {hasFilters && (
-              <span className="tabular-nums"> · €{total.toFixed(2)} total</span>
+              <span className="tabular-nums"> · {formatMoney(total)} total</span>
             )}
             {pageCount > 1 && (
               <span> · page {currentPage} of {pageCount}</span>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { type Subscription } from '@/lib/types'
+import { formatDate, formatMoney } from '@/lib/format'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
@@ -12,6 +13,8 @@ interface CategoryDatum {
 
 interface SummaryCardsProps {
   subscriptions: Subscription[]
+  /** The month these totals cover, as `YYYY-MM`. */
+  month: string
   monthlyTotal: number
   yearlyTotal: number
   monthlyCategoryData: CategoryDatum[]
@@ -26,6 +29,7 @@ interface BreakdownRow extends CategoryDatum {
 
 export function SummaryCards({
   subscriptions,
+  month,
   monthlyTotal,
   yearlyTotal,
   monthlyCategoryData,
@@ -35,8 +39,11 @@ export function SummaryCards({
   const [period, setPeriod] = useState<'monthly' | 'yearly'>('monthly')
 
   const total = period === 'monthly' ? monthlyTotal : yearlyTotal
-  const year = new Date().getFullYear()
-  const month = new Date().toLocaleDateString('en-GB', { month: 'long' })
+  // Derived from the prop rather than a fresh `new Date()`. This renders on the
+  // server too, and the server's clock is usually UTC — reading it here made the
+  // heading disagree with the totals whenever the two sat in different months.
+  const year = month.slice(0, 4)
+  const monthLabel = formatDate(`${month}-01`, { month: 'long' })
 
   if (monthlyTotal === 0 && yearlyTotal === 0 && subscriptions.length === 0) {
     return (
@@ -98,12 +105,12 @@ export function SummaryCards({
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            {period === 'monthly' ? `Spent in ${month}` : `Spent in ${year}`}
+            {period === 'monthly' ? `Spent in ${monthLabel}` : `Spent in ${year}`}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-4xl font-semibold tracking-tight tabular-nums">
-            €{total.toFixed(2)}
+            {formatMoney(total)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {subscriptions.filter(s => s.active).length} active subscriptions
@@ -116,7 +123,7 @@ export function SummaryCards({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              {period === 'monthly' ? `Spending by category — ${month}` : `Spending by category — ${year}`}
+              {period === 'monthly' ? `Spending by category — ${monthLabel}` : `Spending by category — ${year}`}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
@@ -144,12 +151,12 @@ export function SummaryCards({
                       {hasBudget ? (
                         <>
                           <span className={over ? 'text-destructive' : undefined}>
-                            €{amount.toFixed(2)}
+                            {formatMoney(amount)}
                           </span>
-                          <span className="text-muted-foreground"> / €{budget.toFixed(2)}</span>
+                          <span className="text-muted-foreground"> / {formatMoney(budget)}</span>
                         </>
                       ) : (
-                        <>€{amount.toFixed(2)}</>
+                        <>{formatMoney(amount)}</>
                       )}
                     </span>
                   </div>
@@ -161,7 +168,7 @@ export function SummaryCards({
                   </div>
                   {over && (
                     <span className="text-xs text-destructive">
-                      Over by €{(amount - budget).toFixed(2)}
+                      Over by {formatMoney(amount - budget)}
                     </span>
                   )}
                 </div>

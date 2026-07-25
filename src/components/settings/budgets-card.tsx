@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { type Budget } from '@/lib/types'
+import { formatMoney } from '@/lib/format'
 import { CATEGORIES } from '@/lib/categories'
 import { setBudget, deleteBudget } from '@/app/dashboard/settings/actions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -73,7 +74,7 @@ export function BudgetsCard({ budgets }: BudgetsCardProps) {
               <div key={b.id} className="flex items-center justify-between py-2">
                 <span className="text-sm">{b.category}</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm tabular-nums">€{b.amount.toFixed(2)}</span>
+                  <span className="text-sm tabular-nums">{formatMoney(b.amount)}</span>
                   <Button
                     size="icon"
                     variant="ghost"
