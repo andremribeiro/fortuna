@@ -6,7 +6,6 @@ import { SpendHero } from '@/components/dashboard/spend-hero'
 import { CategoryBreakdown } from '@/components/dashboard/category-breakdown'
 import { UpcomingCharges } from '@/components/dashboard/upcoming-charges'
 import { SpendTrend, type MonthTotal } from '@/components/dashboard/spend-trend'
-import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 
 interface CategoryTotal {
   category: string
@@ -129,7 +128,6 @@ export default async function DashboardPage() {
             yearlyCategoryData={yearlyCategoryData}
             budgets={(budgets as Pick<Budget, 'category' | 'amount'>[]) ?? []}
           />
-          <RecentTransactions />
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">
