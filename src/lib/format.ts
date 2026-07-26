@@ -56,3 +56,23 @@ export function currentMonth(): string {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 }
+
+/** Moves a `YYYY-MM` month by `delta` months, rolling the year over. */
+export function shiftMonth(month: string, delta: number): string {
+  const [y, m] = month.split('-').map(Number)
+  const d = new Date(y, m - 1 + delta, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+export function daysInMonth(month: string): number {
+  const [y, m] = month.split('-').map(Number)
+  return new Date(y, m, 0).getDate()
+}
+
+/** Formats a `YYYY-MM` month, e.g. "July" or "Jul 2026". */
+export function formatMonth(
+  month: string,
+  options: Intl.DateTimeFormatOptions = { month: 'long' }
+): string {
+  return formatDate(`${month}-01`, options)
+}
