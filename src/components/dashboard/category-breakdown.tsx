@@ -131,9 +131,12 @@ export function CategoryBreakdown({
                     )}
                   </span>
                 </div>
-                <div className="h-2.5 overflow-hidden rounded-r-[4px] bg-muted">
+                {/* Rounded at both ends. A squared-off start is the right call
+                    for a bar rising from a drawn axis, but there is no axis
+                    here — against a rounded track it just looks cut. */}
+                <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                   <div
-                    className={`h-full rounded-r-[4px] transition-all ${barColor}`}
+                    className={`h-full rounded-full transition-all ${barColor}`}
                     style={{ width: `${Math.min(ratio, 1) * 100}%` }}
                   />
                 </div>
@@ -156,9 +159,9 @@ export function CategoryBreakdown({
                   {formatMoney(foldedTotal)}
                 </span>
               </div>
-              <div className="h-2.5 overflow-hidden rounded-r-[4px] bg-muted">
+              <div className="h-2.5 overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-r-[4px] bg-foreground/25"
+                  className="h-full rounded-full bg-foreground/25"
                   style={{ width: `${max > 0 ? Math.min(foldedTotal / max, 1) * 100 : 0}%` }}
                 />
               </div>
