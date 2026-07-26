@@ -26,6 +26,24 @@ interface TransactionListProps {
   transactions: Transaction[]
 }
 
+// Whichever field is the most specific thing we know about the row.
+function title(t: Transaction) {
+  return t.merchant ?? t.description ?? t.category ?? 'Expense'
+}
+
+// materializeCharges stamps "<name> — auto-charged" on every charge it writes.
+// That text was the only clue a row was automatic while descriptions were
+// invisible; now that `source` drives a visible marker it is just noise on
+// every subscription row. Matched exactly rather than by source alone, so a
+// description you have since edited is never swallowed.
+function describes(t: Transaction) {
+  if (!t.description || t.description === title(t)) return null
+  if (t.source === 'subscription' && t.description === `${t.merchant} — auto-charged`) {
+    return null
+  }
+  return t.description
+}
+
 export function TransactionList({ transactions }: TransactionListProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
@@ -156,22 +174,27 @@ export function TransactionList({ transactions }: TransactionListProps) {
                     selected.has(t.id) ? 'bg-muted/50' : ''
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <Checkbox
                       checked={selected.has(t.id)}
                       onCheckedChange={() => toggleOne(t.id)}
                       aria-label={`Select ${t.merchant ?? 'transaction'}`}
                     />
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-medium">
-                        {t.merchant ?? t.description ?? t.category ?? 'Expense'}
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className="truncate text-sm font-medium">
+                        {title(t)}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      {/* The description used to be reachable only by opening
+                          the edit dialog. It rides the category line rather
+                          than adding a third row to every entry. */}
+                      <span className="truncate text-xs text-muted-foreground">
                         {t.category ?? 'Uncategorized'}
+                        {t.source === 'subscription' && <> · Auto</>}
+                        {describes(t) && <> · {describes(t)}</>}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex shrink-0 items-center gap-1">
                     <span className="text-sm font-medium tabular-nums mr-2">
                       {formatMoney(t.amount)}
                     </span>
