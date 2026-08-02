@@ -119,13 +119,21 @@ export default async function DashboardPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          {/* Today's date only describes the page while the page is about
+              today; once you step back it belongs to the month in view. */}
           <p className="text-sm text-muted-foreground">
-            {formatDate(today(), {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            })}
+            {month === now
+              ? formatDate(today(), {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })
+              : `1 – ${formatDate(lastOfMonth, {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}`}
           </p>
         </div>
         <MonthStepper month={month} currentMonth={now} />
