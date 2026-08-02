@@ -6,6 +6,7 @@ import { SpendHero } from '@/components/dashboard/spend-hero'
 import { CategoryBreakdown } from '@/components/dashboard/category-breakdown'
 import { UpcomingCharges } from '@/components/dashboard/upcoming-charges'
 import { SpendTrend, type MonthTotal } from '@/components/dashboard/spend-trend'
+import { MonthStepper } from '@/components/dashboard/month-stepper'
 
 interface CategoryTotal {
   category: string
@@ -23,21 +24,34 @@ interface Totals {
 const TREND_MONTHS_BACK = 5
 const TREND_MONTHS_AHEAD = 1
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>
+}) {
   // Before the queries below, not alongside them: any charge that came due
   // today has to exist as a transaction to be counted in these totals.
   await materializeCharges()
 
   const supabase = await createClient()
 
-  const month = currentMonth()
+  const now = currentMonth()
+  const { month: requested } = await searchParams
+  // Only a well-formed month, and never a future one: there is nothing to show
+  // past today, and an unbounded param would let the stepper run away forever.
+  const month =
+    /^\d{4}-(0[1-9]|1[0-2])$/.test(requested ?? '') && requested! <= now ? requested! : now
+
   const { from: firstOfMonth, to: lastOfMonth } = monthRange(month)
   const previous = shiftMonth(month, -1)
   const { from: firstOfPrevious, to: lastOfPrevious } = monthRange(previous)
   const year = month.slice(0, 4)
 
-  const trendFrom = monthRange(shiftMonth(month, -TREND_MONTHS_BACK)).from
-  const trendTo = monthRange(shiftMonth(month, TREND_MONTHS_AHEAD)).to
+  // The trend stays anchored to today rather than following the stepper: it is
+  // the fixed backdrop you compare a month against, and its "booked" flag is
+  // only meaningful relative to the real present.
+  const trendFrom = monthRange(shiftMonth(now, -TREND_MONTHS_BACK)).from
+  const trendTo = monthRange(shiftMonth(now, TREND_MONTHS_AHEAD)).to
 
   const [
     { data: subscriptions, error: subError },
@@ -73,8 +87,11 @@ export default async function DashboardPage() {
   const yearlyCategoryData = (yearCategories ?? []) as CategoryTotal[]
 
   // A brand new account has nothing to lay out — the cards would all render as
-  // zeroes and empty rails, which reads as broken rather than new.
+  // zeroes and empty rails, which reads as broken rather than new. Only ever on
+  // the current month: a quiet month in the past is a real answer, and this
+  // screen has no stepper to page back out of it.
   const isEmpty =
+    month === now &&
     allSubscriptions.length === 0 &&
     (monthTotals?.match_count ?? 0) === 0 &&
     yearlyCategoryData.length === 0
@@ -99,16 +116,19 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">
-          {formatDate(today(), {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          })}
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            {formatDate(today(), {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          </p>
+        </div>
+        <MonthStepper month={month} currentMonth={now} />
       </div>
 
       <div className="grid items-start gap-4 lg:grid-cols-[1.55fr_1fr]">
@@ -132,7 +152,7 @@ export default async function DashboardPage() {
 
         <div className="flex min-w-0 flex-col gap-4">
           <UpcomingCharges subscriptions={allSubscriptions} />
-          <SpendTrend months={(trend ?? []) as MonthTotal[]} currentMonth={month} />
+          <SpendTrend months={(trend ?? []) as MonthTotal[]} currentMonth={now} />
         </div>
       </div>
     </div>
