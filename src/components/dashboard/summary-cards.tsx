@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { type Subscription } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,6 +19,12 @@ interface SummaryCardsProps {
   monthlyCategoryData: CategoryDatum[]
   yearlyCategoryData: CategoryDatum[]
   budgets: { category: string; amount: number }[]
+  monthLabel: string
+  year: number
+  prevMonth: string
+  /** null when already on the current month — there's no future to step into. */
+  nextMonth: string | null
+  isCurrentMonth: boolean
 }
 
 // A category row on the breakdown, optionally carrying its monthly budget cap.
@@ -31,24 +39,15 @@ export function SummaryCards({
   monthlyCategoryData,
   yearlyCategoryData,
   budgets,
+  monthLabel,
+  year,
+  prevMonth,
+  nextMonth,
+  isCurrentMonth,
 }: SummaryCardsProps) {
   const [period, setPeriod] = useState<'monthly' | 'yearly'>('monthly')
 
   const total = period === 'monthly' ? monthlyTotal : yearlyTotal
-  const year = new Date().getFullYear()
-  const month = new Date().toLocaleDateString('en-GB', { month: 'long' })
-
-  if (monthlyTotal === 0 && yearlyTotal === 0 && subscriptions.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
-        <p className="text-2xl">💸</p>
-        <p className="font-medium">No data yet</p>
-        <p className="text-sm text-muted-foreground">
-          Add subscriptions or transactions to see your spending.
-        </p>
-      </div>
-    )
-  }
 
   const budgetMap = new Map(budgets.map((b) => [b.category, b.amount]))
 
@@ -72,103 +71,190 @@ export function SummaryCards({
       ? monthlyRows
       : yearlyCategoryData.map((d) => ({ ...d }))
 
+  const isEmptyMonth = period === 'monthly' && monthlyCategoryData.length === 0
+  const showBrandNewState =
+    isCurrentMonth &&
+    monthlyTotal === 0 &&
+    yearlyTotal === 0 &&
+    subscriptions.length === 0
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Toggle */}
-      <div className="flex items-center gap-1 self-end border rounded-lg p-1">
-        <Button
-          size="sm"
-          variant={period === 'monthly' ? 'secondary' : 'ghost'}
-          className="h-7 text-xs"
-          onClick={() => setPeriod('monthly')}
-        >
-          This month
-        </Button>
-        <Button
-          size="sm"
-          variant={period === 'yearly' ? 'secondary' : 'ghost'}
-          className="h-7 text-xs"
-          onClick={() => setPeriod('yearly')}
-        >
-          This year
-        </Button>
+      {/* Month stepper + period toggle. Always rendered, so an empty month
+          never leaves you stranded with no way back. */}
+      <div className="flex items-center justify-between gap-2">
+        {period === 'monthly' ? (
+          <div className="flex items-center gap-1">
+            <Button
+              asChild
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              aria-label="Previous month"
+            >
+              <Link href={`/dashboard?month=${prevMonth}`} scroll={false}>
+                <ChevronLeft size={16} />
+              </Link>
+            </Button>
+            <span className="text-sm font-medium min-w-[8.5rem] text-center tabular-nums">
+              {monthLabel}
+            </span>
+            {nextMonth ? (
+              <Button
+                asChild
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                aria-label="Next month"
+              >
+                <Link href={`/dashboard?month=${nextMonth}`} scroll={false}>
+                  <ChevronRight size={16} />
+                </Link>
+              </Button>
+            ) : (
+              <span
+                aria-hidden
+                className="inline-flex h-7 w-7 items-center justify-center text-muted-foreground/40"
+              >
+                <ChevronRight size={16} />
+              </span>
+            )}
+            {!isCurrentMonth && (
+              <Button
+                asChild
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs text-muted-foreground ml-1"
+              >
+                <Link href="/dashboard" scroll={false}>
+                  Today
+                </Link>
+              </Button>
+            )}
+          </div>
+        ) : (
+          <span className="text-sm font-medium tabular-nums">{year}</span>
+        )}
+
+        <div className="flex items-center gap-1 border rounded-lg p-1">
+          <Button
+            size="sm"
+            variant={period === 'monthly' ? 'secondary' : 'ghost'}
+            className="h-7 text-xs"
+            onClick={() => setPeriod('monthly')}
+          >
+            Month
+          </Button>
+          <Button
+            size="sm"
+            variant={period === 'yearly' ? 'secondary' : 'ghost'}
+            className="h-7 text-xs"
+            onClick={() => setPeriod('yearly')}
+          >
+            Year
+          </Button>
+        </div>
       </div>
 
-      {/* Total card */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            {period === 'monthly' ? `Spent in ${month}` : `Spent in ${year}`}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-4xl font-semibold tracking-tight tabular-nums">
-            €{total.toFixed(2)}
+      {showBrandNewState ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center gap-3">
+          <p className="text-2xl">💸</p>
+          <p className="font-medium">No data yet</p>
+          <p className="text-sm text-muted-foreground">
+            Add subscriptions or transactions to see your spending.
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {subscriptions.filter(s => s.active).length} active subscriptions
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+      ) : (
+        <>
+          {/* Total card */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {period === 'monthly' ? `Spent in ${monthLabel}` : `Spent in ${year}`}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-4xl font-semibold tracking-tight tabular-nums">
+                €{total.toFixed(2)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {subscriptions.filter((s) => s.active).length} active subscriptions
+              </p>
+            </CardContent>
+          </Card>
 
-      {/* Category breakdown from actual transactions */}
-      {rows.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {period === 'monthly' ? `Spending by category — ${month}` : `Spending by category — ${year}`}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {rows.map(({ category, amount, budget }) => {
-              const hasBudget = budget !== undefined && budget > 0
-              // Budgeted rows track progress toward the cap; others show share of total.
-              const ratio = hasBudget
-                ? amount / budget
-                : total > 0 ? amount / total : 0
-              const width = Math.min(ratio, 1) * 100
-              const over = hasBudget && amount > budget
-              const barColor = !hasBudget
-                ? 'bg-foreground'
-                : over
-                  ? 'bg-destructive'
-                  : ratio >= 0.8
-                    ? 'bg-amber-500'
-                    : 'bg-emerald-500'
+          {/* Category breakdown from actual transactions */}
+          {isEmptyMonth ? (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No transactions recorded in {monthLabel}.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            rows.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {period === 'monthly'
+                      ? `Spending by category — ${monthLabel}`
+                      : `Spending by category — ${year}`}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3">
+                  {rows.map(({ category, amount, budget }) => {
+                    const hasBudget = budget !== undefined && budget > 0
+                    // Budgeted rows track progress toward the cap; others show share of total.
+                    const ratio = hasBudget
+                      ? amount / budget
+                      : total > 0 ? amount / total : 0
+                    const width = Math.min(ratio, 1) * 100
+                    const over = hasBudget && amount > budget
+                    const barColor = !hasBudget
+                      ? 'bg-foreground'
+                      : over
+                        ? 'bg-destructive'
+                        : ratio >= 0.8
+                          ? 'bg-amber-500'
+                          : 'bg-emerald-500'
 
-              return (
-                <div key={category} className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">{category}</span>
-                    <span className="text-sm tabular-nums">
-                      {hasBudget ? (
-                        <>
-                          <span className={over ? 'text-destructive' : undefined}>
-                            €{amount.toFixed(2)}
+                    return (
+                      <div key={category} className="flex flex-col gap-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm">{category}</span>
+                          <span className="text-sm tabular-nums">
+                            {hasBudget ? (
+                              <>
+                                <span className={over ? 'text-destructive' : undefined}>
+                                  €{amount.toFixed(2)}
+                                </span>
+                                <span className="text-muted-foreground"> / €{budget.toFixed(2)}</span>
+                              </>
+                            ) : (
+                              <>€{amount.toFixed(2)}</>
+                            )}
                           </span>
-                          <span className="text-muted-foreground"> / €{budget.toFixed(2)}</span>
-                        </>
-                      ) : (
-                        <>€{amount.toFixed(2)}</>
-                      )}
-                    </span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${barColor}`}
-                      style={{ width: `${width}%` }}
-                    />
-                  </div>
-                  {over && (
-                    <span className="text-xs text-destructive">
-                      Over by €{(amount - budget).toFixed(2)}
-                    </span>
-                  )}
-                </div>
-              )
-            })}
-          </CardContent>
-        </Card>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${barColor}`}
+                            style={{ width: `${width}%` }}
+                          />
+                        </div>
+                        {over && (
+                          <span className="text-xs text-destructive">
+                            Over by €{(amount - budget).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </CardContent>
+              </Card>
+            )
+          )}
+        </>
       )}
     </div>
   )

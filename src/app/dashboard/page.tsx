@@ -3,16 +3,38 @@ import { type Subscription, type Budget } from '@/lib/types'
 import { SummaryCards } from '@/components/dashboard/summary-cards'
 import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 
-export default async function DashboardPage() {
+// 'YYYY-MM' shifted by whole months, so stepping past January rolls the year.
+function shiftMonth(key: string, delta: number) {
+  const [y, m] = key.split('-').map(Number)
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1))
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>
+}) {
+  const { month: monthParam } = await searchParams
   const supabase = await createClient()
 
   const now = new Date()
-  const year = now.getUTCFullYear()
-  const month = String(now.getUTCMonth() + 1).padStart(2, '0')
-  const firstOfMonth = `${year}-${month}-01`
-  const lastDay = new Date(Date.UTC(year, now.getUTCMonth() + 1, 0)).getUTCDate()
-  const lastOfMonth = `${year}-${month}-${String(lastDay).padStart(2, '0')}`
-  const firstOfYear = `${year}-01-01`
+  const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+
+  // Only accept a well-formed month, and never one in the future — there is
+  // nothing to show there and it would let the stepper run away forever.
+  const isValid = /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam ?? '')
+  const selected = isValid && monthParam! <= currentMonth ? monthParam! : currentMonth
+
+  const [selYear, selMonth] = selected.split('-').map(Number)
+  const firstOfMonth = `${selected}-01`
+  const lastDay = new Date(Date.UTC(selYear, selMonth, 0)).getUTCDate()
+  const lastOfMonth = `${selected}-${String(lastDay).padStart(2, '0')}`
+
+  // The yearly view follows the month you're looking at, so stepping back into
+  // a previous year and switching to "This year" shows that year, not this one.
+  const firstOfYear = `${selYear}-01-01`
+  const lastOfYear = `${selYear}-12-31`
 
   const [
     { data: subscriptions, error: subError },
@@ -22,7 +44,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase.from('subscriptions').select('*').eq('active', true).order('name'),
     supabase.from('transactions').select('amount, category').gte('date', firstOfMonth).lte('date', lastOfMonth),
-    supabase.from('transactions').select('amount, category').gte('date', firstOfYear),
+    supabase.from('transactions').select('amount, category').gte('date', firstOfYear).lte('date', lastOfYear),
     supabase.from('budgets').select('category, amount'),
   ])
 
@@ -54,6 +76,15 @@ export default async function DashboardPage() {
     .map(([category, amount]) => ({ category, amount }))
     .sort((a, b) => b.amount - a.amount)
 
+  const selDate = new Date(Date.UTC(selYear, selMonth - 1, 1))
+  // Drop the year while you're in the current one; show it once stepping back
+  // makes "March" ambiguous.
+  const monthLabel = selDate.toLocaleDateString('en-GB', {
+    month: 'long',
+    timeZone: 'UTC',
+    ...(selYear === now.getUTCFullYear() ? {} : { year: 'numeric' }),
+  })
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -69,6 +100,11 @@ export default async function DashboardPage() {
         monthlyCategoryData={monthlyCategoryData}
         yearlyCategoryData={yearlyCategoryData}
         budgets={(budgets as Pick<Budget, 'category' | 'amount'>[]) ?? []}
+        monthLabel={monthLabel}
+        year={selYear}
+        prevMonth={shiftMonth(selected, -1)}
+        nextMonth={selected < currentMonth ? shiftMonth(selected, 1) : null}
+        isCurrentMonth={selected === currentMonth}
       />
       <RecentTransactions />
     </div>
